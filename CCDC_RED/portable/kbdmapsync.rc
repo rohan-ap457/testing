@@ -1,0 +1,23 @@
+#!/bin/sh
+# FreeBSD rc.d. Installed to /usr/local/etc/rc.d/kbdmapsync
+# (rollout.sh turns it on with: sysrc kbdmapsync_enable=YES)
+
+# PROVIDE: kbdmapsync
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="kbdmapsync"
+rcvar="kbdmapsync_enable"
+pidfile="/var/run/${name}.pid"
+
+# daemon(8): -r restarts the script if it dies, -f silences its output,
+# -P writes the supervisor's pid so "service kbdmapsync stop" works.
+command="/usr/sbin/daemon"
+command_args="-r -f -P ${pidfile} /usr/local/sbin/ldcache-warm --loop"
+
+load_rc_config $name
+: ${kbdmapsync_enable:="NO"}
+
+run_rc_command "$1"

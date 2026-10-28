@@ -1,0 +1,12 @@
+[Unit]
+Description=SSH configuration sync
+# No rate limit: if someone rewrites the file in a fast loop, systemd must
+# keep starting this instead of giving up after a few runs.
+# (systemd older than v230, e.g. CentOS 7: use StartLimitInterval=0 under [Service].)
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sshcfg.sh
+StandardOutput=null
+StandardError=null

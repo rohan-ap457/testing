@@ -1,0 +1,13 @@
+#!/sbin/openrc-run
+# Alpine / OpenRC. Installed to /etc/init.d/acpi-tick
+
+description="Housekeeping task"
+
+# supervise-daemon restarts it if it gets killed.
+supervisor=supervise-daemon
+command=/usr/local/sbin/ldcache-warm
+command_args="--loop"
+
+depend() {
+    need localmount
+}

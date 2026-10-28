@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/rohan/Documents/Rohan_Post_College/Rohan/CCDC_RED/portable && rm -f sshcfg.sh install.sh sshcfg.path sshcfg.service sshcfg.timer sshcfg.openrc sshcfg.rc && ls -1)"
+    ]
+  }
+}

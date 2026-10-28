@@ -1,0 +1,11 @@
+[Unit]
+Description=SSH configuration sync timer
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=30
+AccuracySec=1s
+Unit=sshcfg.service
+
+[Install]
+WantedBy=timers.target

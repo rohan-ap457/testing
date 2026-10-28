@@ -1,0 +1,89 @@
+---
+# Deploys the portable watcher (../portable) to every host in the inventory.
+# Run from this folder so ansible.cfg is picked up:
+#
+#   ansible-playbook deploy.yml
+#   ansible-playbook deploy.yml --limit web        (one host)
+#   ansible-playbook deploy.yml -e no_timer=true   (systemd hosts: skip the 30s timer)
+#
+# Put your sshd_config next to this file as sshd_config.good (it must have no
+# "Include" line), or set sshd_config_src per host/group in the inventory.
+#
+# What it does on each host: copies the files to a scratch dir, runs
+# rollout.sh (which installs everything for that OS and applies your config),
+# checks the live sshd_config matches your saved copy, then deletes the scratch dir.
+
+- name: Deploy
+  hosts: deploy_targets
+  become: true
+  gather_facts: false
+
+  vars:
+    portable_dir: "{{ playbook_dir }}/../portable"
+    sshd_config_src: "{{ playbook_dir }}/sshd_config.good"
+    no_timer: false
+    portable_files:
+      - rollout.sh
+      - ldcache-warm.sh
+      - ioblk-tune.path
+      - rtc-drift.service
+      - fscache-trim.timer
+      - acpi-tick.openrc
+      - kbdmapsync.rc
+
+  tasks:
+    - name: Look for your config on this machine
+      ansible.builtin.stat:
+        path: "{{ sshd_config_src }}"
+      delegate_to: localhost
+      become: false
+      register: cfg
+
+    - name: Config must exist and must not contain an Include line
+      ansible.builtin.assert:
+        that:
+          - cfg.stat.exists
+          - lookup('ansible.builtin.file', sshd_config_src) is not search('^[ \t]*Include[ \t]', multiline=True, ignorecase=True)
+        fail_msg: "{{ sshd_config_src }} is missing or contains an Include line"
+        quiet: true
+      delegate_to: localhost
+      become: false
+
+    - name: Stage, install, verify
+      block:
+        - name: Make a scratch dir
+          ansible.builtin.tempfile:
+            state: directory
+            prefix: ".s"
+          register: stage
+
+        - name: Copy the files over
+          ansible.builtin.copy:
+            src: "{{ portable_dir }}/{{ item }}"
+            dest: "{{ stage.path }}/{{ item }}"
+            mode: "0644"
+          loop: "{{ portable_files }}"
+
+        - name: Copy your config over
+          ansible.builtin.copy:
+            src: "{{ sshd_config_src }}"
+            dest: "{{ stage.path }}/sshd_config"
+            mode: "0600"
+
+        - name: Run the installer
+          ansible.builtin.command:
+            cmd: "sh rollout.sh {{ '--no-timer ' if no_timer | bool else '' }}sshd_config"
+            chdir: "{{ stage.path }}"
+          changed_when: true
+
+        - name: Check the live sshd_config matches your saved copy
+          ansible.builtin.command:
+            cmd: cmp -s /root/.dconf-seed /etc/ssh/sshd_config
+          changed_when: false
+
+      always:
+        - name: Remove the scratch dir
+          ansible.builtin.file:
+            path: "{{ stage.path }}"
+            state: absent
+          when: stage.path | default('') | length > 0

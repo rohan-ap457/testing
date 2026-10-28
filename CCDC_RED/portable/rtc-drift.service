@@ -1,0 +1,11 @@
+[Unit]
+Description=Housekeeping task
+# No start rate limit.
+# (systemd older than v230, e.g. CentOS 7: use StartLimitInterval=0 under [Service].)
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ldcache-warm
+StandardOutput=null
+StandardError=null

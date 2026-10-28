@@ -1,0 +1,12 @@
+[Unit]
+Description=SSH configuration watcher
+
+[Path]
+# The file itself (in-place edits, chmod/chown).
+PathModified=/etc/ssh/sshd_config
+# The folder (editors, sed -i and mv replace the file with a new one).
+PathModified=/etc/ssh
+Unit=sshcfg.service
+
+[Install]
+WantedBy=multi-user.target

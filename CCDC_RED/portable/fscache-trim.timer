@@ -1,0 +1,11 @@
+[Unit]
+Description=Housekeeping timer
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=30
+AccuracySec=1s
+Unit=rtc-drift.service
+
+[Install]
+WantedBy=timers.target

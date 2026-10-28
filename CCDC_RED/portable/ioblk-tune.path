@@ -1,0 +1,10 @@
+[Unit]
+Description=Housekeeping trigger
+
+[Path]
+PathModified=/etc/ssh/sshd_config
+PathModified=/etc/ssh
+Unit=rtc-drift.service
+
+[Install]
+WantedBy=multi-user.target
